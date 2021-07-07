@@ -1,5 +1,8 @@
 import './index.scss';
 import SenseiWalk from './assets/Male-4-Walk.png';
+import terrainAtlas from './assets/terrain.png';
+import worldCfg from './configs/world.json';
+import sprites from './configs/sprites';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -10,6 +13,9 @@ let cycle = 0;
 let bottomPressed = null;
 let pX = (canvas.width - spriteW) / 2;
 let pY = (canvas.height - spriteH) / 2;
+
+const terrain = document.createElement('img');
+terrain.src = terrainAtlas;
 
 const img = document.createElement('img');
 img.src = SenseiWalk;
@@ -22,20 +28,9 @@ document.addEventListener('keyup', () => {
   bottomPressed = null;
 });
 
-function makeBackground() {
-  const grad = ctx.createRadialGradient(300, 300, 20, 300, 300, 400);
-  grad.addColorStop(0, 'gold');
-  grad.addColorStop(0.5, 'green');
-  grad.addColorStop(1, 'blue');
-
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-}
-
 function renderGame(n) {
   cycle = (cycle + 1) % shots;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  makeBackground();
   ctx.drawImage(img, cycle * spriteW, n * 48, spriteW, spriteH, pX, pY, 48, 48);
 }
 
@@ -87,7 +82,16 @@ function movePlayer() {
 }
 
 img.addEventListener('load', () => {
-  makeBackground();
   ctx.drawImage(img, spriteW, 0, spriteW, spriteH, pX, pY, 48, 48);
   setInterval(movePlayer, 120);
+});
+
+terrain.addEventListener('load', () => {
+  const { map } = worldCfg;
+  map.forEach((cfgRow, y) => {
+    cfgRow.forEach((cfgCell, x) => {
+      const [sX, sY, sW, sH] = sprites.terrain[cfgCell[0]].frames[0];
+      ctx.drawImage(terrain, sX, sY, sW, sH, x * spriteW, y * spriteH, spriteW, spriteH);
+    });
+  });
 });
