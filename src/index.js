@@ -7,19 +7,19 @@ const spriteW = 48;
 const spriteH = 48;
 const shots = 3;
 let cycle = 0;
-const bottomPressed = {};
-let pX = 276;
-let pY = 276;
+let bottomPressed = null;
+let pX = (canvas.width - spriteW) / 2;
+let pY = (canvas.height - spriteH) / 2;
 
 const img = document.createElement('img');
 img.src = SenseiWalk;
 
 document.addEventListener('keydown', (e) => {
-  bottomPressed[e.code] = true;
+  bottomPressed = e.code;
 });
 
-document.addEventListener('keyup', (e) => {
-  bottomPressed[e.code] = false;
+document.addEventListener('keyup', () => {
+  bottomPressed = null;
 });
 
 function makeBackground() {
@@ -29,57 +29,65 @@ function makeBackground() {
   grad.addColorStop(1, 'blue');
 
   ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, 600, 600);
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+function renderGame(n) {
+  cycle = (cycle + 1) % shots;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  makeBackground();
+  ctx.drawImage(img, cycle * spriteW, n * 48, spriteW, spriteH, pX, pY, 48, 48);
 }
 
 function movePlayer() {
-  if (bottomPressed.Down || bottomPressed.ArrowDown) {
-    pY += 10;
-    cycle = (cycle + 1) % shots;
-    ctx.clearRect(0, 0, 600, 600);
-    makeBackground();
-    ctx.drawImage(img, cycle * spriteW, 0, spriteW, spriteH, pX, pY, 48, 48);
-  }
+  switch (bottomPressed) {
+    case 'Down':
+    case 'ArrowDown':
+      pY += 10;
+      renderGame(0);
+      break;
 
-  if (bottomPressed.Up || bottomPressed.ArrowUp) {
-    pY -= 10;
-    cycle = (cycle + 1) % shots;
-    ctx.clearRect(0, 0, 600, 600);
-    makeBackground();
-    ctx.drawImage(img, cycle * spriteW, 3 * 48, spriteW, spriteH, pX, pY, 48, 48);
-  }
+    case 'Left':
+    case 'ArrowLeft':
+      pX -= 10;
+      renderGame(1);
+      break;
 
-  if (bottomPressed.Right || bottomPressed.ArrowRight) {
-    pX += 10;
-    cycle = (cycle + 1) % shots;
-    ctx.clearRect(0, 0, 600, 600);
-    makeBackground();
-    ctx.drawImage(img, cycle * spriteW, 2 * 48, spriteW, spriteH, pX, pY, 48, 48);
-  }
+    case 'Right':
+    case 'ArrowRight':
+      pX += 10;
+      renderGame(2);
+      break;
 
-  if (bottomPressed.Left || bottomPressed.ArrowLeft) {
-    pX -= 10;
-    cycle = (cycle + 1) % shots;
-    ctx.clearRect(0, 0, 600, 600);
-    makeBackground();
-    ctx.drawImage(img, cycle * spriteW, 1 * 48, spriteW, spriteH, pX, pY, 48, 48);
+    case 'Up':
+    case 'ArrowUp':
+      pY -= 10;
+      renderGame(3);
+      break;
+
+    default:
+      bottomPressed = null;
   }
 
   if (pX < 0) {
     pX = 0;
-  } else if (pX > 552) {
-    pX = 552;
+  }
+
+  if (pX > canvas.width - spriteW) {
+    pX = canvas.width - spriteW;
   }
 
   if (pY < 0) {
     pY = 0;
-  } else if (pY > 552) {
-    pY = 552;
+  }
+
+  if (pY > canvas.height - spriteH) {
+    pY = canvas.height - spriteH;
   }
 }
 
 img.addEventListener('load', () => {
   makeBackground();
-  ctx.drawImage(img, 0, 0, spriteW, spriteH, pX, pY, 48, 48);
+  ctx.drawImage(img, spriteW, 0, spriteW, spriteH, pX, pY, 48, 48);
   setInterval(movePlayer, 120);
 });
