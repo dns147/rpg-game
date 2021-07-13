@@ -1,8 +1,6 @@
 import './index.scss';
 import SenseiWalk from './assets/Male-4-Walk.png';
-import terrainAtlas from './assets/terrain.png';
-import worldCfg from './configs/world.json';
-import sprites from './configs/sprites';
+import ClientGame from './client/ClientGame';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -13,9 +11,6 @@ let cycle = 0;
 let bottomPressed = null;
 let pX = (canvas.width - spriteW) / 2;
 let pY = (canvas.height - spriteH) / 2;
-
-const terrain = document.createElement('img');
-terrain.src = terrainAtlas;
 
 const img = document.createElement('img');
 img.src = SenseiWalk;
@@ -28,36 +23,36 @@ document.addEventListener('keyup', () => {
   bottomPressed = null;
 });
 
-function renderGame(n) {
+function renderPlayer(n) {
   cycle = (cycle + 1) % shots;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(img, cycle * spriteW, n * 48, spriteW, spriteH, pX, pY, 48, 48);
 }
 
-function movePlayer() {
+function walk(timestamp) {
   switch (bottomPressed) {
     case 'Down':
     case 'ArrowDown':
       pY += 10;
-      renderGame(0);
+      renderPlayer(0);
       break;
 
     case 'Left':
     case 'ArrowLeft':
       pX -= 10;
-      renderGame(1);
+      renderPlayer(1);
       break;
 
     case 'Right':
     case 'ArrowRight':
       pX += 10;
-      renderGame(2);
+      renderPlayer(2);
       break;
 
     case 'Up':
     case 'ArrowUp':
       pY -= 10;
-      renderGame(3);
+      renderPlayer(3);
       break;
 
     default:
@@ -79,19 +74,15 @@ function movePlayer() {
   if (pY > canvas.height - spriteH) {
     pY = canvas.height - spriteH;
   }
+
+  window.requestAnimationFrame(walk);
 }
 
 img.addEventListener('load', () => {
   ctx.drawImage(img, spriteW, 0, spriteW, spriteH, pX, pY, 48, 48);
-  setInterval(movePlayer, 120);
+  window.requestAnimationFrame(walk);
 });
 
-terrain.addEventListener('load', () => {
-  const { map } = worldCfg;
-  map.forEach((cfgRow, y) => {
-    cfgRow.forEach((cfgCell, x) => {
-      const [sX, sY, sW, sH] = sprites.terrain[cfgCell[0]].frames[0];
-      ctx.drawImage(terrain, sX, sY, sW, sH, x * spriteW, y * spriteH, spriteW, spriteH);
-    });
-  });
+window.addEventListener('load', () => {
+  ClientGame.init({ tagId: 'game' });
 });
