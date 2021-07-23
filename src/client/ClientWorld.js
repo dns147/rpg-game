@@ -57,7 +57,7 @@ class ClientWorld extends PositionedObject {
     }
   }
 
-  // --- Берём ячейку мира и возвращаем её ---
+  // ---  Берём ячейку мира и возвращаем её ---
   cellAt(col, row) {
     return this.map[row] && this.map[row][col];
   }

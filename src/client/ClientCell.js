@@ -1,6 +1,6 @@
 //  ClientCell - это класс, отвечающий за работу отдельной ячейки
 //  карты. Все игровые объекты (objects) должны быть привязаны к
-//  какой-то ячейке, чтобы быть отрендеренными.
+//  какой-то ячейке, чтобы быть отрендеренными. 
 
 import PositionedObject from '../common/PositionedObject';
 import ClientGameObject from './ClientGameObject';
