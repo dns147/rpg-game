@@ -25,11 +25,15 @@ class ClientGame {
   }
 
   createEngine() {
-    return new ClientEngine(this.canvas);
+    return new ClientEngine(this.canvas, this);
   }
 
   createWorld() {
     return new ClientWorld(this, this.engine, levelCfg);
+  }
+
+  getWorld() {
+    return this.map;
   }
 
   initEngine() {
@@ -38,6 +42,7 @@ class ClientGame {
       this.map.init();
       this.engine.on('render', (_, time) => {
         // --- Регистация события 'render' через метод 'this.engine.on' класса ClientEngine
+        this.engine.camera.focusAtGameObject(this.player);
         this.map.render(time);
       });
 
@@ -46,34 +51,33 @@ class ClientGame {
     });
   }
 
-  movePlayer(x, y) {
-    this.player.moveByCellCoord(x, y, (cell) => {
-      return cell.findObjectsByType('grass').length;
-    });
+  movePlayer(state, x, y, dir) {
+    if (state && this.player.motionProgress === 1) {
+      const canMovie = this.player.moveByCellCoord(x, y, (cell) => {
+        return cell.findObjectsByType('grass').length;
+      });
+
+      if (canMovie) {
+        this.player.setState(dir);
+        this.player.once('motion-stopped', () => this.player.setState('main'));
+      }
+    }
   }
 
   initKeys() {
     this.engine.input.onKey({
       ArrowLeft: (keydown) => {
-        if (keydown) {
-          this.movePlayer(-1, 0);
-        }
+        this.movePlayer(keydown, -1, 0, 'left');
       },
       ArrowRight: (keydown) => {
-        if (keydown) {
-          this.movePlayer(1, 0);
-        }
+        this.movePlayer(keydown, 1, 0, 'right');
       },
       ArrowDown: (keydown) => {
-        if (keydown) {
-          this.movePlayer(0, 1);
-        }
+        this.movePlayer(keydown, 0, 1, 'down');
       },
       ArrowUp: (keydown) => {
-        if (keydown) {
-          this.movePlayer(0, -1);
-        }
-      }
+        this.movePlayer(keydown, 0, -1, 'up');
+      },
     });
   }
 

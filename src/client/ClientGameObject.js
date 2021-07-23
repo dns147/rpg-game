@@ -1,8 +1,9 @@
-//  ClientGameObject - это класс, представляющий собой любой 
-//  игровой объект, который может быть отрендерен в игре. 
+//  ClientGameObject - это класс, представляющий собой любой
+//  игровой объект, который может быть отрендерен в игре.
 //  В каждый момент он должен быть привязан к какой-то ячейке.
 
 import MovableObject from '../common/MovableObject';
+import { animateEx } from '../common/util';
 
 class ClientGameObject extends MovableObject {
   constructor(cfg) {
@@ -15,7 +16,7 @@ class ClientGameObject extends MovableObject {
     const objCfg = typeof cfg.objCfg === 'string' ? { type: cfg.objCfg } : cfg.objCfg;
 
     if (objCfg.player) {
-        world.game.setPlayer(this);
+      world.game.setPlayer(this);
     }
 
     Object.assign(
@@ -30,6 +31,8 @@ class ClientGameObject extends MovableObject {
         objectConfig: objCfg,
         type: objCfg.type,
         world,
+        state: 'main',
+        animationStartTime: 0,
       },
       cfg,
     );
@@ -37,14 +40,19 @@ class ClientGameObject extends MovableObject {
 
   moveByCellCoord(dcol, drow, conditionCallback = null) {
     const { cell } = this;
-    this.moveToCellCoord(cell.cellCol + dcol, cell.cellRow + drow, conditionCallback);
+    return this.moveToCellCoord(cell.cellCol + dcol, cell.cellRow + drow, conditionCallback);
   }
 
   moveToCellCoord(dcol, drow, conditionCallback = null) {
     const { world } = this;
     const newCell = world.cellAt(dcol, drow);
+    const canMovie = !conditionCallback || conditionCallback(newCell);
 
-    if (!conditionCallback || conditionCallback(newCell)) this.setCell(newCell);
+    if (canMovie) {
+      this.setCell(newCell);
+    }
+
+    return canMovie;
   }
 
   setCell(newCell) {
@@ -53,9 +61,28 @@ class ClientGameObject extends MovableObject {
       this.cell = newCell;
       newCell.addGameObject(this);
 
-      const { x, y, width, height } = newCell;
-      Object.assign(this, { x, y, width, height });
+      this.moveTo(newCell.x, newCell.y, true, 200);
+
+      // const { x, y, width, height } = newCell;
+      // Object.assign(this, { x, y, width, height });
     }
+  }
+
+  setState(state) {
+    this.state = state;
+
+    if (this.world) {
+      this.animationStartTime = this.world.engine.lastRenderTime;
+    }
+  }
+
+  getCurrentFrame(time) {
+    const state = this.spriteCfg.states[this.state];
+    const lengthFrame = state.frames.length;
+    const animate = animateEx(lengthFrame, this.animationStartTime, time, state.duration, true);
+    const frame = ((lengthFrame + animate.offset) | 0) % lengthFrame;
+
+    return state.frames[frame];
   }
 
   render(time) {
@@ -64,9 +91,9 @@ class ClientGameObject extends MovableObject {
     const { x, y, width, height, world } = this;
     const engine = world.engine;
 
-    const { sprite, frame, states } = this.spriteCfg;
+    const { sprite, frame, states, type } = this.spriteCfg;
 
-    const spriteFrame = states ? states.main.frames[0] : frame;
+    const spriteFrame = type === 'static' ? frame : this.getCurrentFrame(time);
 
     engine.renderSpriteFrame({ sprite, frame: spriteFrame, x, y, w: width, h: height });
   }
