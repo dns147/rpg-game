@@ -4,6 +4,7 @@
 
 import PositionedObject from '../common/PositionedObject';
 import ClientGameObject from './ClientGameObject';
+import ClientPlayer from './ClientPlayer';
 
 class ClientCell extends PositionedObject {
   constructor(cfg) {
@@ -19,6 +20,12 @@ class ClientCell extends PositionedObject {
         y: cellWidth * cfg.cellRow,
         width: cellWidth,
         height: cellHeight,
+        col: cfg.cellCol,
+        row: cfg.cellRow,
+        objectClasses: {
+          player: ClientPlayer,
+        },
+        namePlayer: cfg.namePlayer, //---имя игрока---
       },
       cfg,
     );
@@ -27,17 +34,25 @@ class ClientCell extends PositionedObject {
   }
 
   initGameObjects() {
-    const { cellCfg } = this;
+    const { cellCfg, objectClasses, namePlayer } = this;
 
     this.objects = cellCfg.map((layer, layerId) =>
-      layer.map(
-        (objCfg) =>
-          new ClientGameObject({
-            cell: this,
-            objCfg,
-            layerId,
-          }),
-      ),
+      layer.map((objCfg) => {
+        let ObjectClass;
+
+        if (objCfg.class) {
+          ObjectClass = objectClasses[objCfg.class];
+        } else {
+          ObjectClass = ClientGameObject;
+        }
+
+        return new ObjectClass({
+          cell: this,
+          objCfg,
+          layerId,
+          namePlayer, //---имя игрока---
+        });
+      }),
     );
   }
 
