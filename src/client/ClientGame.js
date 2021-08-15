@@ -14,10 +14,12 @@ class ClientGame {
     });
 
     this.canvas = document.getElementById(cfg.tagId);
+    this.namePlayer = cfg.namePlayer; //--- имя игрока ---
 
     this.engine = this.createEngine(); // Создание движка игры
     this.map = this.createWorld(); // Создание карты
-    this.initEngine(); // Инициализация/запуск движка
+    this.initEngine();
+    // Инициализация/запуск движка
   }
 
   setPlayer(player) {
@@ -29,7 +31,7 @@ class ClientGame {
   }
 
   createWorld() {
-    return new ClientWorld(this, this.engine, levelCfg);
+    return new ClientWorld(this, this.engine, levelCfg, this.namePlayer);
   }
 
   getWorld() {

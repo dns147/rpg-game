@@ -1,88 +1,99 @@
+import { io } from 'socket.io-client';
 import './index.scss';
-import SenseiWalk from './assets/Male-4-Walk.png';
 import ClientGame from './client/ClientGame';
+import { getTime } from './common/util';
 
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
-const spriteW = 48;
-const spriteH = 48;
-const shots = 3;
-let cycle = 0;
-let bottomPressed = null;
-let pX = (canvas.width - spriteW) / 2;
-let pY = (canvas.height - spriteH) / 2;
+const $inputName = document.getElementById('name');
+const button = document.querySelector('.btn');
 
-const img = document.createElement('img');
-img.src = SenseiWalk;
-
-document.addEventListener('keydown', (e) => {
-  bottomPressed = e.code;
-});
-
-document.addEventListener('keyup', () => {
-  bottomPressed = null;
-});
-
-function renderPlayer(n) {
-  cycle = (cycle + 1) % shots;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(img, cycle * spriteW, n * 48, spriteW, spriteH, pX, pY, 48, 48);
+if (!$inputName.value) {
+  button.disabled = true;
 }
 
-function walk(timestamp) {
-  switch (bottomPressed) {
-    case 'Down':
-    case 'ArrowDown':
-      pY += 10;
-      renderPlayer(0);
-      break;
-
-    case 'Left':
-    case 'ArrowLeft':
-      pX -= 10;
-      renderPlayer(1);
-      break;
-
-    case 'Right':
-    case 'ArrowRight':
-      pX += 10;
-      renderPlayer(2);
-      break;
-
-    case 'Up':
-    case 'ArrowUp':
-      pY -= 10;
-      renderPlayer(3);
-      break;
-
-    default:
-      bottomPressed = null;
-  }
-
-  if (pX < 0) {
-    pX = 0;
-  }
-
-  if (pX > canvas.width - spriteW) {
-    pX = canvas.width - spriteW;
-  }
-
-  if (pY < 0) {
-    pY = 0;
-  }
-
-  if (pY > canvas.height - spriteH) {
-    pY = canvas.height - spriteH;
-  }
-
-  window.requestAnimationFrame(walk);
-}
-
-img.addEventListener('load', () => {
-  ctx.drawImage(img, spriteW, 0, spriteW, spriteH, pX, pY, 48, 48);
-  window.requestAnimationFrame(walk);
+$inputName.addEventListener('input', () => {
+  button.disabled = false;
 });
 
-window.addEventListener('load', () => {
-  ClientGame.init({ tagId: 'game' });
+button.addEventListener('click', () => {
+  const socket = io('https://jsprochat.herokuapp.com');
+
+  const $startGame = document.querySelector('.start-game');
+  const $nameForm = document.getElementById('nameForm');
+
+  const $chatWrap = document.querySelector('.chat-wrap');
+  const $form = document.getElementById('form');
+  const $input = document.getElementById('input');
+  const $message = document.querySelector('.message');
+
+  const submitName = (e) => {
+    e.preventDefault();
+
+    if ($inputName.value) {
+      ClientGame.init({
+        tagId: 'game',
+        namePlayer: $inputName.value,
+      });
+
+      socket.emit('start', $inputName.value);
+
+      $chatWrap.style.display = 'block';
+
+      $nameForm.removeEventListener('submit', submitName);
+      $startGame.remove();
+    }
+  };
+
+  $nameForm.addEventListener('submit', submitName);
+
+  $form.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    if ($input.value) {
+      socket.emit('chat message', $input.value);
+
+      $input.value = '';
+    }
+  });
+
+  socket.on('chat connection', (data) => {
+    $message.insertAdjacentHTML(
+      'beforeend',
+      `<p style = "color: green"><strong>${getTime(data.time)}<strong>: ${data.msg}</p>`,
+    );
+  });
+
+  socket.on('chat disconnect', (data) => {
+    $message.insertAdjacentHTML(
+      'beforeend',
+      `<p style = "color: red"><strong>${getTime(data.time)}<strong>: ${data.msg}</p>`,
+    );
+  });
+
+  socket.on('chat online', (data) => {
+    let namesOnline = '';
+
+    data.names.forEach((v) => {
+      if (v.name) {
+        namesOnline += `${v.name},` + ' ';
+      }
+    });
+
+    console.log(data.names);
+
+    $message.insertAdjacentHTML(
+      'beforeend',
+      `<p style = "color: brown"><strong>${getTime(data.time)}<strong>: Online(${data.online}) - ${namesOnline}</p>`,
+    );
+  });
+
+  socket.on('chat message', (data) => {
+    if (data.name === 'dns147') {
+      $message.insertAdjacentHTML(
+        'beforeend',
+        `<p style = "color: blue"><strong>${getTime(data.time)}<strong> - ${data.msg}</p>`,
+      );
+    } else {
+      $message.insertAdjacentHTML('beforeend', `<p><strong>${getTime(data.time)}<strong> - ${data.msg}</p>`);
+    }
+  });
 });
