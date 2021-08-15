@@ -1,24 +1,28 @@
-class ClientPlayer {
-  constructor(game, engine, canvas, playerURL) {
-    Object.assign(this, {
-      game,
-      engine,
-      canvas,
-      playerURL,
-      spriteW: 48,
-      spriteH: 48,
-    });
+import ClientGameObject from './ClientGameObject';
+import ClientEngine from './ClientEngine';
+
+class ClientPlayer extends ClientGameObject {
+  constructor(cfg) {
+    super(cfg);
+
+    this.playerName = cfg.namePlayer; //---имя игрока---
+
+    const world = cfg.cell.world;
+
+    world.game.setPlayer(this);
   }
 
-  init() {
-    const { playerURL, spriteW, spriteH, canvas } = this;
+  render(time) {
+    super.render(time);
 
-    this.engine.renderPlayer({
-      playerURL,
-      spriteW,
-      spriteH,
-      pX: (canvas.width - spriteW / 2) / 2,
-      pY: (canvas.height - spriteH / 2) / 2,
+    const { world } = this;
+
+    world.engine.renderSign({
+      x: this.x + world.cellWidth / 2,
+      y: this.y - 15,
+      minWidth: world.cellWidth,
+      maxWidth: world.cellWidth * 1.5,
+      text: this.playerName,
     });
   }
 }
